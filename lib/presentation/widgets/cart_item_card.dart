@@ -18,9 +18,10 @@ class CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final product = item.product;
+    final imageUrl = product?.imageUrl;
 
     return Card(
-      elevation: 3,
+      elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -28,17 +29,23 @@ class CartItemCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: product?.imageUrl.isNotEmpty == true
+              child: imageUrl != null && imageUrl.isNotEmpty
                   ? Image.network(
-                product!.imageUrl,
+                imageUrl,
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
               )
-                  : const Icon(Icons.image_not_supported, size: 60),
+                  : Container(
+                width: 60,
+                height: 60,
+                color: Colors.grey[300],
+                child: const Icon(Icons.image_not_supported, size: 32),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -46,16 +53,19 @@ class CartItemCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product?.name ?? 'Unknown',
+                    product?.name ?? 'Unknown Product',
                     style: const TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '\$${(product?.price ?? 0).toStringAsFixed(2)}',
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -63,6 +73,7 @@ class CartItemCard extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.remove_circle_outline),
                         onPressed: onDecrease,
+                        color: onDecrease != null ? Colors.black : Colors.grey,
                       ),
                       Text(
                         '${item.quantity}',
@@ -80,6 +91,7 @@ class CartItemCard extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: onRemove,
+              tooltip: 'Remove from cart',
             ),
           ],
         ),

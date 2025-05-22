@@ -1,22 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controller/cart_controller.dart';
+import '../../core/events/cart_event_bus.dart';
+import '../../core/events/cart_events.dart';
 import '../widgets/cart_item_card.dart';
 
-class CartPage extends StatelessWidget {
+class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final c = Get.find<CartController>();
+  State<CartPage> createState() => _CartPageState();
+}
 
+class _CartPageState extends State<CartPage> {
+  late final CartController c;
+  late final CartEventBus eventBus;
+
+  @override
+  void initState() {
+    super.initState();
+    c = Get.find<CartController>();
+    eventBus = Get.find<CartEventBus>();
+
+    // 🔔 Listen to cart events
+    eventBus.events.listen((event) {
+      if (event is ItemAddedToCart) {
+        Get.snackbar(
+          'Cart Updated',
+          'Added ${event.quantity} x item(s)',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      } else if (event is ItemRemovedFromCart) {
+        Get.snackbar(
+          'Item Removed',
+          'Item removed from cart',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      } else if (event is CartCleared) {
+        Get.snackbar(
+          'Cart Cleared',
+          'All items removed',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.withOpacity(0.8),
+          colorText: Colors.white,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Cart'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => c.fetchCart(), // ✅ Manual refresh
+            onPressed: () => c.fetchCart(),
           ),
           IconButton(
             icon: const Icon(Icons.delete_forever),
@@ -39,7 +83,7 @@ class CartPage extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        if (c.loading.value) {
+        if (c.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -61,10 +105,10 @@ class CartPage extends StatelessWidget {
           children: [
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () => c.fetchCart(), // ✅ Pull-to-refresh
+                onRefresh: () => c.fetchCart(),
                 child: ListView.builder(
                   padding: const EdgeInsets.all(12),
-                  physics: const AlwaysScrollableScrollPhysics(), // ensures gesture works even if few items
+                  physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: c.cartItems.length,
                   itemBuilder: (_, i) {
                     final item = c.cartItems[i];
