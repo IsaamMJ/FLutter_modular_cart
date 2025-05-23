@@ -41,7 +41,11 @@ class CartController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchCart();
+
+    // ✅ Fetch cart only if user is authenticated
+    if (userContext.currentUserId.isNotEmpty) {
+      fetchCart();
+    }
   }
 
   Future<void> fetchCart() async {
@@ -60,6 +64,7 @@ class CartController extends GetxController {
       final error = 'Failed to fetch cart: $e';
       state.value = state.value.copyWith(errorMessage: error);
       print(error);
+
       config.onEventLog?.call('cart_fetch_failed', {
         'userId': userContext.currentUserId,
         'error': error,
@@ -69,8 +74,13 @@ class CartController extends GetxController {
     }
   }
 
-  Future<void> addItem(String productId, int quantity,
-      {required String name, required double price, required String imageUrl}) async {
+  Future<void> addItem(
+      String productId,
+      int quantity, {
+        required String name,
+        required double price,
+        required String imageUrl,
+      }) async {
     try {
       final existing = cartItems.firstWhereOrNull((i) => i.productId == productId);
       final newQuantity = (existing?.quantity ?? 0) + quantity;
@@ -102,6 +112,7 @@ class CartController extends GetxController {
       state.value = state.value.copyWith(items: updatedItems);
 
       eventBus.emit(ItemAddedToCart(productId, quantity));
+
       config.onEventLog?.call('item_added', {
         'productId': productId,
         'quantity': newQuantity,
@@ -111,7 +122,6 @@ class CartController extends GetxController {
       print('❌ Failed to add item: $e');
     }
   }
-
 
   Future<void> removeItem(String? itemId) async {
     if (!_isValidUuid(itemId)) return;
@@ -123,12 +133,13 @@ class CartController extends GetxController {
       state.value = state.value.copyWith(items: updatedItems);
 
       eventBus.emit(ItemRemovedFromCart(itemId));
+
       config.onEventLog?.call('item_removed', {
         'itemId': itemId,
         'userId': userContext.currentUserId,
       });
     } catch (e) {
-      print('Failed to remove item: $e');
+      print('❌ Failed to remove item: $e');
     }
   }
 
@@ -148,11 +159,9 @@ class CartController extends GetxController {
         'userId': userContext.currentUserId,
       });
     } catch (e) {
-      print('Failed to clear cart: $e');
+      print('❌ Failed to clear cart: $e');
     }
   }
 
-  bool _isValidUuid(String? id) {
-    return id != null && id.isNotEmpty;
-  }
+  bool _isValidUuid(String? id) => id != null && id.isNotEmpty;
 }
