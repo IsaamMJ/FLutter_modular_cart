@@ -41,32 +41,33 @@ class CartController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
-    // ✅ Fetch cart only if user is authenticated
-    if (userContext.currentUserId.isNotEmpty) {
-      fetchCart();
-    }
+    // Cart is only fetched after login
   }
 
   Future<void> fetchCart() async {
-    state.value = state.value.copyWith(isLoading: true, errorMessage: null);
+    final userId = userContext.currentUserId;
+    if (userId.isEmpty) {
+      print('⚠️ [CartController] fetchCart() skipped — userId is empty');
+      return;
+    }
 
+    state.value = state.value.copyWith(isLoading: true, errorMessage: null);
     try {
-      final items = await getCart(userContext.currentUserId);
+      final items = await getCart(userId);
       state.value = state.value.copyWith(items: items);
       eventBus.emit(CartFetched());
 
       config.onEventLog?.call('cart_fetched', {
-        'userId': userContext.currentUserId,
+        'userId': userId,
         'itemCount': items.length,
       });
     } catch (e) {
       final error = 'Failed to fetch cart: $e';
       state.value = state.value.copyWith(errorMessage: error);
-      print(error);
+      print('❌ [CartController] $error');
 
       config.onEventLog?.call('cart_fetch_failed', {
-        'userId': userContext.currentUserId,
+        'userId': userId,
         'error': error,
       });
     } finally {
@@ -81,13 +82,19 @@ class CartController extends GetxController {
         required double price,
         required String imageUrl,
       }) async {
+    final userId = userContext.currentUserId;
+    if (userId.isEmpty) {
+      print('⚠️ [CartController] Cannot add item — userId is empty');
+      return;
+    }
+
     try {
       final existing = cartItems.firstWhereOrNull((i) => i.productId == productId);
       final newQuantity = (existing?.quantity ?? 0) + quantity;
 
       final item = CartItem(
         id: existing?.id,
-        userId: userContext.currentUserId,
+        userId: userId,
         productId: productId,
         quantity: newQuantity,
         product: Product(
@@ -102,7 +109,6 @@ class CartController extends GetxController {
 
       final updatedItems = List<CartItem>.from(cartItems);
       final index = updatedItems.indexWhere((i) => i.productId == productId);
-
       if (index != -1) {
         updatedItems[index] = item;
       } else {
@@ -110,40 +116,47 @@ class CartController extends GetxController {
       }
 
       state.value = state.value.copyWith(items: updatedItems);
-
       eventBus.emit(ItemAddedToCart(productId, quantity));
 
       config.onEventLog?.call('item_added', {
         'productId': productId,
         'quantity': newQuantity,
-        'userId': userContext.currentUserId,
+        'userId': userId,
       });
     } catch (e) {
-      print('❌ Failed to add item: $e');
+      print('❌ [CartController] Failed to add item: $e');
     }
   }
 
   Future<void> removeItem(String? itemId) async {
-    if (!_isValidUuid(itemId)) return;
+    final userId = userContext.currentUserId;
+    if (!_isValidUuid(itemId)) {
+      print('⚠️ [CartController] removeItem called with invalid ID');
+      return;
+    }
 
     try {
       await removeFromCart(itemId!);
-
       final updatedItems = cartItems.where((item) => item.id != itemId).toList();
       state.value = state.value.copyWith(items: updatedItems);
-
       eventBus.emit(ItemRemovedFromCart(itemId));
 
       config.onEventLog?.call('item_removed', {
         'itemId': itemId,
-        'userId': userContext.currentUserId,
+        'userId': userId,
       });
     } catch (e) {
-      print('❌ Failed to remove item: $e');
+      print('❌ [CartController] Failed to remove item: $e');
     }
   }
 
   Future<void> clearCart() async {
+    final userId = userContext.currentUserId;
+    if (userId.isEmpty) {
+      print('⚠️ [CartController] Cannot clear cart — userId is empty');
+      return;
+    }
+
     try {
       for (final item in cartItems) {
         if (_isValidUuid(item.id)) {
@@ -156,10 +169,10 @@ class CartController extends GetxController {
 
       config.onEventLog?.call('cart_cleared', {
         'itemCount': cartItems.length,
-        'userId': userContext.currentUserId,
+        'userId': userId,
       });
     } catch (e) {
-      print('❌ Failed to clear cart: $e');
+      print('❌ [CartController] Failed to clear cart: $e');
     }
   }
 
