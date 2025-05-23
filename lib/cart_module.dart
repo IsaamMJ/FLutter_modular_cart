@@ -12,7 +12,6 @@ import 'controller/cart_controller.dart';
 import 'core/events/cart_event_bus.dart';
 import 'core/services/cart_service.dart';
 import 'core/services/i_cart_service.dart';
-import 'core/services/i_user_context.dart';
 import 'core/facade/cart_facade.dart';
 import 'core/facade/cart_facade_impl.dart';
 import 'data/repository/cart_repository_impl.dart';
@@ -26,17 +25,20 @@ import 'presentation/pages/cart_page.dart';
 
 class CartModule {
   static void init(CartModuleConfig config) {
+    final SupabaseClient client = config.supabaseClient;
+
     // 🔹 Repository
     Get.put<CartRepository>(
-      CartRepositoryImpl(config.supabaseClient),
+      CartRepositoryImpl(client),
       permanent: true,
     );
 
     // 🔹 Use Cases
-    Get.lazyPut(() => GetCartUseCase(Get.find()), fenix: true);
-    Get.lazyPut(() => AddToCartUseCase(Get.find()), fenix: true);
-    Get.lazyPut(() => RemoveFromCartUseCase(Get.find()), fenix: true);
-    Get.lazyPut(() => UpdateCartQuantityUseCase(Get.find()), fenix: true);
+    Get
+      ..lazyPut(() => GetCartUseCase(Get.find()), fenix: true)
+      ..lazyPut(() => AddToCartUseCase(Get.find()), fenix: true)
+      ..lazyPut(() => RemoveFromCartUseCase(Get.find()), fenix: true)
+      ..lazyPut(() => UpdateCartQuantityUseCase(Get.find()), fenix: true);
 
     // 🔹 Event Bus
     Get.put<CartEventBus>(CartEventBus(), permanent: true);
@@ -48,40 +50,30 @@ class CartModule {
         Get.find<AddToCartUseCase>(),
         Get.find<RemoveFromCartUseCase>(),
         Get.find<UpdateCartQuantityUseCase>(),
-        config, // ✅ Now passing full config (not just userContext)
+        config,
         Get.find<CartEventBus>(),
       ),
       permanent: true,
     );
 
-    // 🔹 Cart Service
-    Get.lazyPut<ICartService>(
-          () => CartService(Get.find<CartController>()),
-      fenix: true,
-    );
-
-    // 🔹 Cart Facade
-    Get.lazyPut<CartFacade>(
-          () => CartFacadeImpl(Get.find<CartController>()),
-      fenix: true,
-    );
+    // 🔹 Cart Service and Facade
+    Get
+      ..lazyPut<ICartService>(() => CartService(Get.find()), fenix: true)
+      ..lazyPut<CartFacade>(() => CartFacadeImpl(Get.find()), fenix: true);
   }
 
-  static List<GetPage> getRoutes() {
-    return [
-      GetPage(
-        name: AppRoutes.cart,
-        page: () => const CartPage(),
-        binding: _EmptyCartBinding(),
-        participatesInRootNavigator: false, // nested routes should be false
-        transition: Transition.noTransition,
-      ),
-    ];
-  }
-
+  static List<GetPage> getRoutes() => [
+    GetPage(
+      name: AppRoutes.cart,
+      page: () => const CartPage(),
+      binding: _EmptyCartBinding(),
+      participatesInRootNavigator: false,
+      transition: Transition.noTransition,
+    ),
+  ];
 }
 
-// Satisfies GetX route requirement; bindings already handled in init()
+/// Minimal binding since init() already handles dependency injection.
 class _EmptyCartBinding extends Bindings {
   @override
   void dependencies() {}
