@@ -22,7 +22,6 @@ class _CartPageState extends State<CartPage> {
     c = Get.find<CartController>();
     eventBus = Get.find<CartEventBus>();
 
-    // 🔔 Listen to cart events
     eventBus.events.listen((event) {
       if (event is ItemAddedToCart) {
         Get.snackbar(
@@ -108,17 +107,36 @@ class _CartPageState extends State<CartPage> {
                 onRefresh: () => c.fetchCart(),
                 child: ListView.builder(
                   padding: const EdgeInsets.all(12),
-                  physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: c.cartItems.length,
                   itemBuilder: (_, i) {
                     final item = c.cartItems[i];
+                    final product = item.product;
                     return CartItemCard(
                       item: item,
                       onRemove: () => c.removeItem(item.id),
-                      onIncrease: () =>
-                          c.addItem(item.productId, item.quantity + 1),
+                      onIncrease: () {
+                        if (product != null) {
+                          c.addItem(
+                            item.productId,
+                            item.quantity + 1,
+                            name: product.name,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                          );
+                        }
+                      },
                       onDecrease: item.quantity > 1
-                          ? () => c.addItem(item.productId, item.quantity - 1)
+                          ? () {
+                        if (product != null) {
+                          c.addItem(
+                            item.productId,
+                            item.quantity - 1,
+                            name: product.name,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                          );
+                        }
+                      }
                           : null,
                     );
                   },

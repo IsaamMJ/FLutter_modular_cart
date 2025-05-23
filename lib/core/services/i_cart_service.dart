@@ -9,7 +9,14 @@ abstract class ICartService {
   Stream<CartState> get cartStream;
 
   Future<void> fetchCart();
-  Future<void> addItem(String productId, int quantity);
+  Future<void> addItem(
+      String productId,
+      int quantity, {
+        required String name,
+        required double price,
+        required String imageUrl,
+      });
+
   Future<void> removeItem(String? itemId);
   Future<void> clearCart();
 }

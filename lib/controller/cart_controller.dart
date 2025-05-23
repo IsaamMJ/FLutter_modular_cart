@@ -9,6 +9,7 @@ import '../../domain/entity/cart_item.dart';
 import '../core/events/cart_event_bus.dart';
 import '../core/events/cart_events.dart';
 import '../core/state/cart_state.dart';
+import '../domain/entity/product.dart';
 
 class CartController extends GetxController {
   final GetCartUseCase getCart;
@@ -68,37 +69,49 @@ class CartController extends GetxController {
     }
   }
 
-  Future<void> addItem(String productId, int quantity) async {
+  Future<void> addItem(String productId, int quantity,
+      {required String name, required double price, required String imageUrl}) async {
     try {
+      final existing = cartItems.firstWhereOrNull((i) => i.productId == productId);
+      final newQuantity = (existing?.quantity ?? 0) + quantity;
+
       final item = CartItem(
+        id: existing?.id,
         userId: userContext.currentUserId,
         productId: productId,
-        quantity: quantity,
+        quantity: newQuantity,
+        product: Product(
+          id: productId,
+          name: name,
+          price: price,
+          imageUrl: imageUrl,
+        ),
       );
 
       await addToCart(item);
 
-      final items = List<CartItem>.from(cartItems);
-      final index = items.indexWhere((i) => i.productId == productId);
+      final updatedItems = List<CartItem>.from(cartItems);
+      final index = updatedItems.indexWhere((i) => i.productId == productId);
 
       if (index != -1) {
-        items[index] = items[index].copyWith(quantity: quantity);
+        updatedItems[index] = item;
       } else {
-        items.add(item);
+        updatedItems.add(item);
       }
 
-      state.value = state.value.copyWith(items: items);
-      eventBus.emit(ItemAddedToCart(productId, quantity));
+      state.value = state.value.copyWith(items: updatedItems);
 
+      eventBus.emit(ItemAddedToCart(productId, quantity));
       config.onEventLog?.call('item_added', {
         'productId': productId,
-        'quantity': quantity,
+        'quantity': newQuantity,
         'userId': userContext.currentUserId,
       });
     } catch (e) {
-      print('Failed to add item: $e');
+      print('❌ Failed to add item: $e');
     }
   }
+
 
   Future<void> removeItem(String? itemId) async {
     if (!_isValidUuid(itemId)) return;

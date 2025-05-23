@@ -24,8 +24,17 @@ class CartService implements ICartService {
   Future<void> fetchCart() => _controller.fetchCart();
 
   @override
-  Future<void> addItem(String productId, int quantity) =>
-      _controller.addItem(productId, quantity);
+  Future<void> addItem(String productId, int quantity,
+      {required String name, required double price, required String imageUrl}) {
+    return _controller.addItem(
+      productId,
+      quantity,
+      name: name,
+      price: price,
+      imageUrl: imageUrl,
+    );
+  }
+
 
   @override
   Future<void> removeItem(String? itemId) =>
