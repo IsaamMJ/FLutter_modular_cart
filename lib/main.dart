@@ -1,8 +1,11 @@
-import 'package:cart_module/cart_module.dart'; // ✅ updated entry point
-import 'package:cart_module/core/services/i_user_context.dart';
+import 'package:cart_module/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:cart_module/cart_module.dart';
+import 'package:cart_module/core/services/i_user_context.dart';
+import 'package:cart_module/cart_module_initializer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,14 +17,14 @@ void main() async {
 
   const testUserId = '32500b6a-67e5-4df2-972d-bad675322aaa';
 
-  // ✅ Bind test user context
+  // ✅ Bind mock user context
   Get.put<IUserContext>(_TestUserContext(testUserId));
 
-  // ✅ Initialize the cart module
-  CartModule.init(CartModuleConfig(
+  // ✅ Initialize the cart module using the initializer
+  CartModuleInitializer.init(
     supabaseClient: Supabase.instance.client,
     userContext: Get.find<IUserContext>(),
-  ));
+  );
 
   runApp(const CartApp());
 }
@@ -35,15 +38,14 @@ class CartApp extends StatelessWidget {
       title: 'Cart Module Preview',
       debugShowCheckedModeBanner: false,
       initialRoute: '/cart',
-      getPages: CartModule.getRoutes(), // ✅ use new routing method
+      getPages: CartPages.routes(), // ✅ Updated to use CartPages
     );
   }
 }
 
-// ✅ Simple test implementation of IUserContext
+// ✅ Simple test IUserContext implementation
 class _TestUserContext implements IUserContext {
   final String _userId;
-
   _TestUserContext(this._userId);
 
   @override

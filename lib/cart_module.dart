@@ -20,12 +20,14 @@ import 'domain/usecases/get_cart_usecase.dart';
 import 'domain/usecases/add_to_cart_usecase.dart';
 import 'domain/usecases/remove_from_cart_usecase.dart';
 import 'domain/usecases/update_cart_quantity_usecase.dart';
-import 'routes/app_routes.dart';
-import 'presentation/pages/cart_page.dart';
 
 class CartModule {
-  static void init(CartModuleConfig config) {
-    final SupabaseClient client = config.supabaseClient;
+  /// Exposed config for use in routing
+  static late final CartModuleConfig config;
+
+  static void init(CartModuleConfig cfg) {
+    config = cfg;
+    final client = cfg.supabaseClient;
 
     // 🔹 Repository
     Get.put<CartRepository>(
@@ -50,31 +52,15 @@ class CartModule {
         Get.find<AddToCartUseCase>(),
         Get.find<RemoveFromCartUseCase>(),
         Get.find<UpdateCartQuantityUseCase>(),
-        config,
+        cfg,
         Get.find<CartEventBus>(),
       ),
       permanent: true,
     );
 
-    // 🔹 Cart Service and Facade
+    // 🔹 Service and Facade
     Get
       ..lazyPut<ICartService>(() => CartService(Get.find()), fenix: true)
       ..lazyPut<CartFacade>(() => CartFacadeImpl(Get.find()), fenix: true);
   }
-
-  static List<GetPage> getRoutes() => [
-    GetPage(
-      name: AppRoutes.cart,
-      page: () => const CartPage(),
-      binding: _EmptyCartBinding(),
-      participatesInRootNavigator: false,
-      transition: Transition.noTransition,
-    ),
-  ];
-}
-
-/// Minimal binding since init() already handles dependency injection.
-class _EmptyCartBinding extends Bindings {
-  @override
-  void dependencies() {}
 }
