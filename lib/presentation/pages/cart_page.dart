@@ -118,7 +118,7 @@ class _CartPageState extends State<CartPage> {
                         if (product != null) {
                           c.addItem(
                             item.productId,
-                            item.quantity + 1,
+                            1, // ✅ Increment by 1
                             name: product.name,
                             price: product.price,
                             imageUrl: product.imageUrl,
@@ -130,14 +130,14 @@ class _CartPageState extends State<CartPage> {
                         if (product != null) {
                           c.addItem(
                             item.productId,
-                            item.quantity - 1,
+                            -1, // ✅ Decrease by 1
                             name: product.name,
                             price: product.price,
                             imageUrl: product.imageUrl,
                           );
                         }
                       }
-                          : null,
+                      : null,
                     );
                   },
                 ),

@@ -29,6 +29,7 @@ class CartController extends GetxController {
       );
 
   IUserContext get userContext => config.userContext;
+
   final Rx<CartState> state = CartState.empty.obs;
 
   List<CartItem> get cartItems => state.value.items;
@@ -86,7 +87,7 @@ class CartController extends GetxController {
 
   Future<void> addItem(
       String productId,
-      int quantity, {
+      int deltaQuantity, {
         required String name,
         required double price,
         required String imageUrl,
@@ -99,7 +100,15 @@ class CartController extends GetxController {
 
     try {
       final existing = cartItems.firstWhereOrNull((i) => i.productId == productId);
-      final newQuantity = (existing?.quantity ?? 0) + quantity;
+      final currentQty = existing?.quantity ?? 0;
+      final newQuantity = currentQty + deltaQuantity;
+
+      if (newQuantity < 1) {
+        if (_isValidUuid(existing?.id)) {
+          await removeFromCart(existing!.id!);
+        }
+        return;
+      }
 
       final item = CartItem(
         id: existing?.id,
@@ -125,7 +134,7 @@ class CartController extends GetxController {
       }
 
       state.value = state.value.copyWith(items: updatedItems);
-      eventBus.emit(ItemAddedToCart(productId, quantity));
+      eventBus.emit(ItemAddedToCart(productId, deltaQuantity));
 
       config.onEventLog?.call('item_added', {
         'productId': productId,
