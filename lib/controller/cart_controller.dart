@@ -29,7 +29,6 @@ class CartController extends GetxController {
       );
 
   IUserContext get userContext => config.userContext;
-
   final Rx<CartState> state = CartState.empty.obs;
 
   List<CartItem> get cartItems => state.value.items;
@@ -41,14 +40,14 @@ class CartController extends GetxController {
   void onReady() {
     super.onReady();
 
-    // 🔁 React to login state changes via currentUserIdRx
+    // ✅ Reactively fetch cart on login
     ever<String>(userContext.currentUserIdRx, (userId) {
       if (userId.isNotEmpty) {
         fetchCart();
       }
     });
 
-    // ⏯ Fetch immediately if already logged in
+    // ✅ Initial fetch if already logged in
     if (userContext.currentUserId.isNotEmpty) {
       fetchCart();
     }
