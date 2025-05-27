@@ -38,10 +38,12 @@ class CartController extends GetxController {
 
   Stream<CartState> get cartStream => state.stream;
 
+
+
   @override
   void onInit() {
     super.onInit();
-    // Cart is only fetched after login
+    fetchCart();
   }
 
   Future<void> fetchCart() async {
