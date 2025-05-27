@@ -35,16 +35,38 @@ class CartController extends GetxController {
   List<CartItem> get cartItems => state.value.items;
   bool get isLoading => state.value.isLoading;
   String? get errorMessage => state.value.errorMessage;
-
   Stream<CartState> get cartStream => state.stream;
 
-
-
   @override
-  void onInit() {
-    super.onInit();
-    fetchCart();
+  @override
+  void onReady() {
+    super.onReady();
+
+    // Create a reactive wrapper for currentUserId
+    final RxString userIdRx = userContext.currentUserId.obs;
+
+    // Watch for login changes
+    ever<String>(userIdRx, (userId) {
+      if (userId.isNotEmpty) {
+        fetchCart();
+      }
+    });
+
+    // Trigger manually in case already logged in
+    if (userContext.currentUserId.isNotEmpty) {
+      fetchCart();
+    }
+
+    // Periodically update the Rx if the source is not observable
+    // (Only needed if userContext.currentUserId is not reactive)
+    ever<dynamic>(state, (_) {
+      final newId = userContext.currentUserId;
+      if (userIdRx.value != newId) {
+        userIdRx.value = newId;
+      }
+    });
   }
+
 
   Future<void> fetchCart() async {
     final userId = userContext.currentUserId;

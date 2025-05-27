@@ -17,10 +17,10 @@ void main() async {
 
   const testUserId = '32500b6a-67e5-4df2-972d-bad675322aaa';
 
-  // ✅ Bind mock user context
+  // ✅ Bind a test reactive user context
   Get.put<IUserContext>(_TestUserContext(testUserId));
 
-  // ✅ Initialize the cart module using the initializer
+  // ✅ Initialize the cart module
   CartModuleInitializer.init(
     supabaseClient: Supabase.instance.client,
     userContext: Get.find<IUserContext>(),
@@ -38,16 +38,22 @@ class CartApp extends StatelessWidget {
       title: 'Cart Module Preview',
       debugShowCheckedModeBanner: false,
       initialRoute: '/cart',
-      getPages: CartPages.routes(), // ✅ Updated to use CartPages
+      getPages: CartPages.routes(),
     );
   }
 }
 
-// ✅ Simple test IUserContext implementation
+// ✅ Updated to implement full IUserContext with reactivity
 class _TestUserContext implements IUserContext {
-  final String _userId;
-  _TestUserContext(this._userId);
+  final RxString _userId;
+  _TestUserContext(String id) : _userId = id.obs;
 
   @override
-  String get currentUserId => _userId;
+  String get currentUserId => _userId.value;
+
+  @override
+  RxString get currentUserIdRx => _userId;
+
+  @override
+  bool get isLoggedIn => _userId.value.isNotEmpty;
 }
