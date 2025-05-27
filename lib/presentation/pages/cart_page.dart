@@ -22,33 +22,7 @@ class _CartPageState extends State<CartPage> {
     c = Get.find<CartController>();
     eventBus = Get.find<CartEventBus>();
 
-    eventBus.events.listen((event) {
-      if (event is ItemAddedToCart) {
-        Get.snackbar(
-          'Cart Updated',
-          'Added ${event.quantity} x item(s)',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.withOpacity(0.8),
-          colorText: Colors.white,
-        );
-      } else if (event is ItemRemovedFromCart) {
-        Get.snackbar(
-          'Item Removed',
-          'Item removed from cart',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
-      } else if (event is CartCleared) {
-        Get.snackbar(
-          'Cart Cleared',
-          'All items removed',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.withOpacity(0.8),
-          colorText: Colors.white,
-        );
-      }
-    });
+
   }
 
   @override
